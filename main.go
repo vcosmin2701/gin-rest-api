@@ -2,13 +2,15 @@ package main
 
 import (
 	"net/http"
-
 	// run go get . if this package is not installed
+	"os"
+
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	router := gin.Default()
+	router.Use(tokenAuthMiddleware())
 	router.GET("/albums", getAlbums)
 	router.GET("/albums/:id", getAlbumByID)
 	router.POST("/albums", postAlbums)
@@ -72,4 +74,20 @@ func deleteAlbumByID(c *gin.Context) {
 		}
 	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+}
+
+func tokenAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := os.Getenv("API_SECRET_TOKEN")
+		if token == "" {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "server misconfiguration"})
+			return
+		}
+		authHeader := c.GetHeader("Authorization")
+		if authHeader != token {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		c.Next()
+	}
 }
