@@ -16,7 +16,11 @@ func main() {
 	router.POST("/albums", postAlbums)
 	router.DELETE("/albums/:id", deleteAlbumByID)
 
-	router.Run("localhost:8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	router.Run("0.0.0.0:" + port)
 }
 
 type album struct {
